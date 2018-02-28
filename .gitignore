@@ -30,3 +30,8 @@
 *.exe
 *.out
 *.app
+
+*.jpg
+*.png
+*.txt
+*.bin
