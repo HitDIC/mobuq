@@ -1,7 +1,9 @@
 #include <stdlib.h> 
 #include <chrono>
 #include <random>
+#include <fstream>
 #include "ficklaw.h"
+#include <fstream>
 
 double uniform() {
     return double(rand()) / RAND_MAX;
@@ -39,17 +41,23 @@ void Cost::Init() {
     for(int nx=0; nx<Nx; nx++) {
         ob[nx] += distribution(generator);
     }
+
+    //save the observation to file for visualization
+    std::ofstream outbuf("ob.bin", std::ios::binary);
+    outbuf.write(reinterpret_cast<char*>(&Nx), sizeof(int));
+    outbuf.write(reinterpret_cast<char*>(&ob[0]), sizeof(double)*Nx);
+    outbuf.close();
 }
 
 double Cost::Value(double *p) {
-    simulate(pstar, pr, Nx);
+    simulate(p, pr, Nx);
 
     double chisq = 0.0;
     for(int nx=0; nx<Nx; nx++) {
         chisq += (pr[nx] - ob[nx])*(pr[nx] - ob[nx]);
     }
 
-    return chisq;
+    return chisq / Nx;
 }
 
 struct MCMC {
@@ -68,9 +76,9 @@ double MCMC::Probability(double *p) {
 
 void MCMC::Evolve() {
 
-    std::cout << "Beginning of MCMC simulation...\n";
+    std::cout << "Beginning of MCMC simulation...\n" << uniform() << " " << uniform();
 
-    double alpha = 0.01;
+    double alpha = 0.1;
 
     double *current = new double[paramnumber];
     for(int i=0; i<paramnumber; ++i) {
@@ -78,32 +86,40 @@ void MCMC::Evolve() {
     }
     double procurrent = Probability(current);
 
+    std::cout << "pcurrent: " << procurrent << std::endl;
+    // return;
+
     double *tmp = new double[paramnumber];
 
     std::cout << "Before the loop...\n";
 
-    while(true) {
+    std::ofstream outbuf("seq.txt", std::ios::out);
+
+    for(int i=0; i<10000; i++) {
         
         // Random-walk Metropolis algorithm
         for(int i=0; i<paramnumber; ++i) {
-            tmp[i] = current[i] + alpha*uniform()*(upperlimit[i] - lowerlimit[i]);
+            tmp[i] = current[i] + alpha*(uniform()-0.5)*(upperlimit[i] - lowerlimit[i]);
         }
 
         double p = Probability(tmp);
         double rc = std::min(p / procurrent, 1.0);
 
         double r = uniform();
-        std::cout << r << "\t" << rc << "\t" << p << std::endl;
         if(r < rc) {
+            // accept the estimation
             for(int i=0; i<paramnumber; ++i) {
                 current[i] = tmp[i];
             }
+            // std::cout << r << "\t" << rc << "\t" << p << std::endl;
+            procurrent = p;
         }
-        // std::cout << cost->Value(current) << ", ";
-        // for(int i=0; i<paramnumber; ++i) {
-        //     std::cout << current[i] << ", ";
-        // }
-        // std::cout << std::endl;
+
+        for(int i=0; i<paramnumber; ++i) {
+            current[i] = tmp[i];
+            outbuf << current[i] << " ";
+        }
+        outbuf << "\n";
     }
 
     delete []tmp;
@@ -121,7 +137,7 @@ int main() {
     mc->upperlimit = new double[4];
     for(int i=0; i<4; i++) {
         mc->lowerlimit[i] = -400;
-        mc->upperlimit[i] = 0;
+        mc->upperlimit[i] = -300;
     }
 
     std::cout << "Before evolving...\n";
