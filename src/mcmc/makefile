@@ -2,7 +2,7 @@ CC=g++
 
 CPP_FILES := $(wildcard src/*.cpp)
 OBJ_FILES := $(notdir $(CPP_FILES:.cpp=.o))
-CC_FLAGS := -O3 -std=c++11 -static
+CC_FLAGS := -O3 -std=c++11 -static -I../../include
 LD_FLAGS := -L.
 all: mcmc
 
