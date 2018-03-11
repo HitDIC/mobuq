@@ -6,13 +6,14 @@ import os
 # plt.rcParams.update({'figure.autolayout': True})
 
 def intervals(values, counts, incredible):
-    # values: 
-    # counts:
+    # values: values of the x axis of the histogram
+    # counts: values of the y axis of the histogram
     if values.size != counts.size:
         print("Not Equal: %s != %s" % (values.size, counts.size))
         # return
     al = np.sum(counts)
     n = counts.size
+    # to find the left boundary where the total counts are less than half of the incredible ratio
     left = 0.0
     vleft = values[0]
     for i in range(n):
@@ -20,6 +21,7 @@ def intervals(values, counts, incredible):
         if left >= incredible/2.0:
             vleft = values[i]
             break
+    # to find the right boundary where the total counts are less than half of the incredible ratio
     right = 0.0
     vright = values[-1]
     for i in range(n-1, -1, -1):
@@ -34,9 +36,9 @@ def showseq(src, dest):
 
     m, n = data.shape
     n = n-1
+    # collect and plot the images of mcmc simulation results
     imglist = []
     imgall = []
-
     for i in range(n):
         l = []
         for j in range(i+1, n):
@@ -53,6 +55,7 @@ def showseq(src, dest):
         imglist.append(l)
         imgall.extend(l)
 
+    # collect and plot the histogram of the mcmc simulation results
     histlist = []
     reals = [-340.0, -330.0, -320.0, -350.0]
     for i in range(n):
@@ -71,8 +74,8 @@ def showseq(src, dest):
         ax.set_xlim([-450, -50])
         plt.savefig("%d-hist.jpg" % (i, ))
         histlist.append("%d-hist.jpg" % (i, ))
-
-
+        
+    # merge the mcmc simulation results
     # https://kanoki.org/2017/07/12/merge-images-with-python/
     imgs = dict(zip(imgall, [ Image.open(i) for i in imgall]))
     min_img_shape = imgs[imgall[0]].size
